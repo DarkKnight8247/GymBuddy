@@ -918,7 +918,7 @@
   // when offset exceeds available results (not a real error).
   async function loadExercises() {
     showLoading(); allFetched = [];
-    await Promise.all([0,10,20,30,40].map(o => fetchBatch(o)));
+    await fetchBatch(0);
     applyAndRender();
   }
 
@@ -926,17 +926,15 @@
     try {
       const p = new URLSearchParams();
       if (currentMuscle) p.set('muscle', currentMuscle);
-      if (currentType)   p.set('type',   currentType);
-      if (activeDiff)    p.set('difficulty', activeDiff);
+      if (currentType)   p.set('muscle', currentType);
       p.set('offset', offset);
+      p.set('limit', 50);
       const res = await fetch(`${PROXY}?${p}`);
-      // Only skip if it's truly an offset-overrun (empty array or 404)
       if (res.status === 404) return;
       if (!res.ok) {
-        // On first batch failure, show the error to user
         if (offset === 0) {
           const errBody = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
-          showError(errBody.error || `HTTP ${res.status}`);
+          showError(errBody.error || errBody.body || `HTTP ${res.status}`);
         }
         return;
       }
@@ -977,27 +975,30 @@
     const card = document.createElement('div');
     card.className = 'ex-card';
     card.style.animationDelay = Math.min(i*.05,.7)+'s';
-    const imgSrc = getExercisePhoto(ex);
-    const diffCls = (ex.difficulty||'').toLowerCase();
-    const equipArr = Array.isArray(ex.equipment)?ex.equipment:(ex.equipment?[ex.equipment]:[]);
-    const equipStr = equipArr.length?equipArr.join(', '):'Bodyweight';
+
+    const imgSrc = ex.gifUrl || getExercisePhoto(ex);
+    const diffCls = '';  // ExerciseDB has no difficulty field
+    const equipStr = ex.equipment || 'Bodyweight';
+    const muscle   = ex.target || ex.bodyPart || '';
+    const desc     = Array.isArray(ex.instructions)
+      ? ex.instructions.slice(0,2).join(' ')
+      : (ex.instructions || 'No description available.');
 
     card.innerHTML = `
       <div class="card-accent"></div>
       <div class="card-img-wrap">
         <img src="${imgSrc}" alt="${ex.name}" loading="lazy" />
-        ${diffCls?`<div class="diff-badge ${diffCls}">${cap(ex.difficulty)}</div>`:''}
-        <div class="type-badge">${(ex.type||'').replace(/_/g,' ')}</div>
+        <div class="type-badge">${cap(ex.bodyPart||'')}</div>
       </div>
       <div class="card-body">
         <div class="card-name">${cap(ex.name)}</div>
-        <div class="card-muscle"><div class="muscle-pip"></div><span>${cap(ex.muscle||'General')}</span></div>
-        <p class="card-desc">${ex.instructions||'No description available.'}</p>
+        <div class="card-muscle"><div class="muscle-pip"></div><span>${cap(muscle)}</span></div>
+        <p class="card-desc">${desc}</p>
       </div>
       <div class="card-foot">
         <span class="card-equip">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4v16M18 4v16M3 8h3M18 8h3M3 16h3M18 16h3M6 8h12M6 16h12"/></svg>
-          ${equipStr}
+          ${cap(equipStr)}
         </span>
         <button class="view-btn">View <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></button>
       </div>`;
@@ -1011,19 +1012,26 @@
   function openModal(ex, imgSrc) {
     document.getElementById('mImg').src = imgSrc;
     document.getElementById('mName').textContent = cap(ex.name||'');
-    const dc = (ex.difficulty||'').toLowerCase();
-    const dcol = {beginner:'#22c55e',intermediate:'#3DF2E0',expert:'#ef4444'}[dc]||'#5a7a9a';
-    const eq = Array.isArray(ex.equipment)?ex.equipment:(ex.equipment?[ex.equipment]:[]);
+
+    const muscle = ex.target || ex.bodyPart || '—';
+    const equip  = ex.equipment || 'Bodyweight';
+    const secondary = Array.isArray(ex.secondaryMuscles) ? ex.secondaryMuscles : [];
+    const instructions = Array.isArray(ex.instructions)
+      ? ex.instructions.join(' ')
+      : (ex.instructions || 'No instructions available.');
+
     document.getElementById('mTags').innerHTML =
-      `<span class="mtag m">${cap(ex.muscle||'—')}</span>
-       <span class="mtag t">${(ex.type||'—').replace(/_/g,' ')}</span>
-       ${eq.map(e=>`<span class="mtag e">${cap(e)}</span>`).join('')}
-       ${dc?`<span class="mtag" style="color:${dcol};border-color:${dcol};background:${dcol}18">${cap(ex.difficulty)}</span>`:''}`;
+      `<span class="mtag m">${cap(muscle)}</span>
+       <span class="mtag t">${cap(ex.bodyPart||'—')}</span>
+       <span class="mtag e">${cap(equip)}</span>
+       ${secondary.slice(0,3).map(s=>`<span class="mtag e">${cap(s)}</span>`).join('')}`;
+
     document.getElementById('mGrid').innerHTML =
-      `<div class="mstat"><div class="mstat-lbl">Muscle</div><div class="mstat-val">${cap(ex.muscle||'—')}</div></div>
-       <div class="mstat"><div class="mstat-lbl">Type</div><div class="mstat-val">${(ex.type||'—').replace(/_/g,' ')}</div></div>
-       <div class="mstat"><div class="mstat-lbl">Difficulty</div><div class="mstat-val" style="color:${dcol}">${cap(ex.difficulty||'—')}</div></div>`;
-    document.getElementById('mInst').textContent = ex.instructions||'No instructions available.';
+      `<div class="mstat"><div class="mstat-lbl">Target</div><div class="mstat-val">${cap(muscle)}</div></div>
+       <div class="mstat"><div class="mstat-lbl">Body Part</div><div class="mstat-val">${cap(ex.bodyPart||'—')}</div></div>
+       <div class="mstat"><div class="mstat-lbl">Equipment</div><div class="mstat-val">${cap(equip)}</div></div>`;
+
+    document.getElementById('mInst').textContent = instructions;
     document.getElementById('overlay').classList.add('open');
     document.body.style.overflow = 'hidden';
   }

@@ -5,42 +5,39 @@ namespace Gymbuddy.Controllers
     public class ExerciseController : Controller
     {
         private readonly IHttpClientFactory _http;
-        private const string BASE    = "https://api.api-ninjas.com/v1/exercises";
-        private const string API_KEY = "Gj5U7YoCoZhljCOIO0PoYMZmaA5sKIWTJxAdSt3Y";
+
+        // ── ExerciseDB via RapidAPI (free tier, 10 req/day on basic) ──
+        private const string BASE    = "https://exercisedb.p.rapidapi.com/exercises";
+        private const string API_KEY  = "01b80e6c84mshfb202b5cc9eef7bp173266jsnc1e3220b99bf";
+        private const string API_HOST = "exercisedb.p.rapidapi.com";
 
         public ExerciseController(IHttpClientFactory http) => _http = http;
 
-        // GET /  and  GET /Exercise
         public IActionResult Index() => View();
 
-        // GET /Exercise/ByMuscle?muscle=biceps&offset=0
+        // GET /Exercise/ByMuscle?muscle=biceps&offset=0&limit=50
         [HttpGet]
         public async Task<IActionResult> ByMuscle(
-            string? muscle, string? type, string? difficulty, int offset = 0)
+            string? muscle, string? bodyPart, int offset = 0, int limit = 50)
         {
             try
             {
                 var client = _http.CreateClient("exercisedb");
 
-                var query = new List<string>();
-                if (!string.IsNullOrEmpty(muscle))     query.Add($"muscle={Uri.EscapeDataString(muscle)}");
-                if (!string.IsNullOrEmpty(type))       query.Add($"type={Uri.EscapeDataString(type)}");
-                if (!string.IsNullOrEmpty(difficulty)) query.Add($"difficulty={Uri.EscapeDataString(difficulty)}");
-                query.Add($"offset={offset}");
-
-                var url = $"{BASE}?{string.Join("&", query)}";
+                // ExerciseDB uses bodyPart, not muscle — map common values
+                var target = bodyPart ?? MuscleToBodyPart(muscle ?? "back");
+                var url = $"{BASE}/bodyPart/{Uri.EscapeDataString(target)}?offset={offset}&limit={limit}";
 
                 var request = new HttpRequestMessage(HttpMethod.Get, url);
-                request.Headers.Add("X-Api-Key", API_KEY);
+                request.Headers.Add("X-RapidAPI-Key", API_KEY);
+                request.Headers.Add("X-RapidAPI-Host", API_HOST);
 
                 var response = await client.SendAsync(request);
-
-                // Return API status + body even on failure so frontend can debug
                 var json = await response.Content.ReadAsStringAsync();
 
                 if (!response.IsSuccessStatusCode)
                     return StatusCode((int)response.StatusCode,
-                        new { error = $"API returned {response.StatusCode}", body = json });
+                        new { error = $"API {response.StatusCode}", body = json });
 
                 return Content(json, "application/json");
             }
@@ -49,5 +46,21 @@ namespace Gymbuddy.Controllers
                 return StatusCode(500, new { error = ex.Message });
             }
         }
+
+        // Map API Ninjas muscle names → ExerciseDB bodyPart names
+        private static string MuscleToBodyPart(string muscle) => muscle.ToLower() switch
+        {
+            "back"        or "lower_back" or "lats" or "traps" => "back",
+            "chest"                                             => "chest",
+            "shoulders"                                         => "shoulders",
+            "biceps"      or "forearms"                         => "upper arms",
+            "triceps"                                           => "upper arms",
+            "quadriceps"  or "hamstrings" or "glutes"           => "upper legs",
+            "calves"                                            => "lower legs",
+            "abdominals"                                        => "waist",
+            "neck"                                              => "neck",
+            "cardio"                                            => "cardio",
+            _                                                   => muscle
+        };
     }
 }
