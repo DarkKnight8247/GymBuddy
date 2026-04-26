@@ -1,5 +1,4 @@
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddHttpClient();
 
 // ── Register services BEFORE builder.Build() ────────────────────────────────
 
@@ -9,29 +8,22 @@ builder.Services.AddHttpClient("exercisedb", client =>
 {
     client.Timeout = TimeSpan.FromSeconds(30);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
-    // If ExerciseDB later requires an API key, add it here:
-    // client.DefaultRequestHeaders.Add("x-api-key", builder.Configuration["ExerciseDB:ApiKey"]);
 });
 
 // ── Build the app ────────────────────────────────────────────────────────────
-var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
-builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+
 var app = builder.Build();
 
 // ── Configure the HTTP request pipeline ─────────────────────────────────────
 
-if (!app.Environment.IsDevelopment())
-{
-    app.UseExceptionHandler("/Home/Error");
-    app.UseHsts();
-}
+// NOTE: No UseHttpsRedirection — Render handles TLS at the load balancer level.
+// Enabling it inside the container causes redirect loops.
 
-app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthorization();
 
-// ── Single route — defaults to ExerciseController/Index ─────────────────────
+// ── Route — defaults to ExerciseController/Index ─────────────────────────────
 
 app.MapControllerRoute(
     name: "default",

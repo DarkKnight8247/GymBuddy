@@ -6,35 +6,17 @@ namespace Gymbuddy.Controllers
     {
         private readonly IHttpClientFactory _http;
         private const string BASE    = "https://api.api-ninjas.com/v1/exercises";
-        private const string API_KEY = "gTNryaGkvmOx3VbWOOKsMRksD8JfTqhIxxv94cSR";
+        private const string API_KEY = "Gj5U7YoCoZhljCOIO0PoYMZmaA5sKIWTJxAdSt3Y";
 
         public ExerciseController(IHttpClientFactory http) => _http = http;
 
-        // GET /   and   GET /Exercise
+        // GET /  and  GET /Exercise
         public IActionResult Index() => View();
 
-public async Task<IActionResult> Test()
-{
-    try
-    {
-        var client = _http.CreateClient("exercisedb");
-        var request = new HttpRequestMessage(HttpMethod.Get, "https://api.api-ninjas.com/v1/exercises?muscle=lower_back");
-        request.Headers.Add("X-Api-Key", API_KEY);
-        
-        var response = await client.SendAsync(request);
-        var body = await response.Content.ReadAsStringAsync();
-        
-        return Content($"Status: {(int)response.StatusCode}\nBody: {body}", "text/plain");
-    }
-    catch (Exception ex)
-    {
-        return Content($"Exception: {ex.GetType().Name}\nMessage: {ex.Message}\nInner: {ex.InnerException?.Message}", "text/plain");
-    }
-}
-
         // GET /Exercise/ByMuscle?muscle=biceps&offset=0
-        // GET /Exercise/ByMuscle?type=cardio&offset=0
-        public async Task<IActionResult> ByMuscle(string? muscle, string? type, string? difficulty, int offset = 0)
+        [HttpGet]
+        public async Task<IActionResult> ByMuscle(
+            string? muscle, string? type, string? difficulty, int offset = 0)
         {
             try
             {
@@ -47,18 +29,24 @@ public async Task<IActionResult> Test()
                 query.Add($"offset={offset}");
 
                 var url = $"{BASE}?{string.Join("&", query)}";
+
                 var request = new HttpRequestMessage(HttpMethod.Get, url);
                 request.Headers.Add("X-Api-Key", API_KEY);
 
                 var response = await client.SendAsync(request);
-                var body = await response.Content.ReadAsStringAsync();
+
+                // Return API status + body even on failure so frontend can debug
+                var json = await response.Content.ReadAsStringAsync();
+
                 if (!response.IsSuccessStatusCode)
-                    return StatusCode(502, new { status = (int)response.StatusCode, error = body, url = url });
-                return Content(body, "application/json");
+                    return StatusCode((int)response.StatusCode,
+                        new { error = $"API returned {response.StatusCode}", body = json });
+
+                return Content(json, "application/json");
             }
-            catch (HttpRequestException ex)
+            catch (Exception ex)
             {
-                return StatusCode(502, new { error = ex.Message });
+                return StatusCode(500, new { error = ex.Message });
             }
         }
     }

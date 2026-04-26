@@ -930,11 +930,21 @@
       if (activeDiff)    p.set('difficulty', activeDiff);
       p.set('offset', offset);
       const res = await fetch(`${PROXY}?${p}`);
-      // ← silently skip non-OK responses (402/429/502 from offset overrun)
-      if (!res.ok) return;
+      // Only skip if it's truly an offset-overrun (empty array or 404)
+      if (res.status === 404) return;
+      if (!res.ok) {
+        // On first batch failure, show the error to user
+        if (offset === 0) {
+          const errBody = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+          showError(errBody.error || `HTTP ${res.status}`);
+        }
+        return;
+      }
       const d = await res.json();
       if (Array.isArray(d)) allFetched.push(...d);
-    } catch { /* network error — silently skip */ }
+    } catch(e) {
+      if (offset === 0) showError(e.message);
+    }
   }
 
   // ─── FILTER + RENDER ──────────────────────────────────────────
