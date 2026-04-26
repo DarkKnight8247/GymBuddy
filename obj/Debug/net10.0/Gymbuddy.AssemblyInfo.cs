@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Gymbuddy")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+901f19538920297744fa9c39f5aa13c144954cd3")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ab5df7993f53afc68836f3277d080cbf6ca3cf0f")]
 [assembly: System.Reflection.AssemblyProductAttribute("Gymbuddy")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Gymbuddy")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
