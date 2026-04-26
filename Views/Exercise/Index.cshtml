@@ -856,7 +856,7 @@
 
   // ─── CONFIG ───────────────────────────────────────────────────
   const PROXY = '/Exercise/ByMuscle';
-  const TYPES = ['cardio','olympic_weightlifting','plyometrics','powerlifting','strength','stretching','strongman'];
+  const TYPES = ['strength','stretching','plyometrics','powerlifting','cardio','olympic_weightlifting','strongman'];
 
   // ─── STATE ────────────────────────────────────────────────────
   let currentMuscle = 'back', currentType = '';
@@ -926,7 +926,7 @@
     try {
       const p = new URLSearchParams();
       if (currentMuscle) p.set('muscle', currentMuscle);
-      if (currentType)   p.set('muscle', currentType);
+      if (currentType)   p.set('muscle', currentType); // cardio uses type as muscle key
       p.set('offset', offset);
       p.set('limit', 50);
       const res = await fetch(`${PROXY}?${p}`);
@@ -940,6 +940,7 @@
       }
       const d = await res.json();
       if (Array.isArray(d)) allFetched.push(...d);
+      else if (d && typeof d === 'object') allFetched.push(d);
     } catch(e) {
       if (offset === 0) showError(e.message);
     }
@@ -948,9 +949,11 @@
   // ─── FILTER + RENDER ──────────────────────────────────────────
   function applyAndRender() {
     const filtered = allFetched.filter(ex => {
-      if (activeType && ex.type !== activeType) return false;
+      // ExerciseDB uses category, not type
+      if (activeType && (ex.category||ex.type||'').toLowerCase() !== activeType) return false;
       if (searchQuery) {
-        const h = [ex.name,ex.muscle,ex.type,ex.difficulty,ex.equipment].join(' ').toLowerCase();
+        const h = [ex.name, ex.target, ex.bodyPart, ex.category, ex.difficulty, ex.equipment]
+          .join(' ').toLowerCase();
         if (!h.includes(searchQuery)) return false;
       }
       return true;
@@ -976,19 +979,22 @@
     card.className = 'ex-card';
     card.style.animationDelay = Math.min(i*.05,.7)+'s';
 
-    const imgSrc = ex.gifUrl || getExercisePhoto(ex);
-    const diffCls = '';  // ExerciseDB has no difficulty field
-    const equipStr = ex.equipment || 'Bodyweight';
-    const muscle   = ex.target || ex.bodyPart || '';
+    // ExerciseDB returns gifUrl — use it, fallback to stock photo
+    const imgSrc   = ex.gifUrl || getExercisePhoto(ex);
+    const muscle   = ex.target   || ex.bodyPart || '';
+    const equip    = ex.equipment || 'Bodyweight';
+    const diffCls  = (ex.difficulty||'').toLowerCase();
+    const category = (ex.category || ex.type || '').replace(/_/g,' ');
     const desc     = Array.isArray(ex.instructions)
       ? ex.instructions.slice(0,2).join(' ')
-      : (ex.instructions || 'No description available.');
+      : (ex.description || ex.instructions || 'No description available.');
 
     card.innerHTML = `
       <div class="card-accent"></div>
       <div class="card-img-wrap">
         <img src="${imgSrc}" alt="${ex.name}" loading="lazy" />
-        <div class="type-badge">${cap(ex.bodyPart||'')}</div>
+        ${diffCls ? `<div class="diff-badge ${diffCls}">${cap(ex.difficulty)}</div>` : ''}
+        <div class="type-badge">${cap(category) || cap(ex.bodyPart||'')}</div>
       </div>
       <div class="card-body">
         <div class="card-name">${cap(ex.name)}</div>
@@ -998,7 +1004,7 @@
       <div class="card-foot">
         <span class="card-equip">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4v16M18 4v16M3 8h3M18 8h3M3 16h3M18 16h3M6 8h12M6 16h12"/></svg>
-          ${cap(equipStr)}
+          ${cap(equip)}
         </span>
         <button class="view-btn">View <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></button>
       </div>`;
@@ -1013,23 +1019,26 @@
     document.getElementById('mImg').src = imgSrc;
     document.getElementById('mName').textContent = cap(ex.name||'');
 
-    const muscle = ex.target || ex.bodyPart || '—';
-    const equip  = ex.equipment || 'Bodyweight';
+    const muscle   = ex.target || ex.bodyPart || '—';
+    const equip    = ex.equipment || 'Bodyweight';
+    const diffCls  = (ex.difficulty||'').toLowerCase();
+    const dcol     = {beginner:'#22c55e',intermediate:'#3DF2E0',expert:'#ef4444'}[diffCls]||'#5a7a9a';
     const secondary = Array.isArray(ex.secondaryMuscles) ? ex.secondaryMuscles : [];
     const instructions = Array.isArray(ex.instructions)
       ? ex.instructions.join(' ')
-      : (ex.instructions || 'No instructions available.');
+      : (ex.description || ex.instructions || 'No instructions available.');
 
     document.getElementById('mTags').innerHTML =
       `<span class="mtag m">${cap(muscle)}</span>
        <span class="mtag t">${cap(ex.bodyPart||'—')}</span>
        <span class="mtag e">${cap(equip)}</span>
+       ${diffCls ? `<span class="mtag" style="color:${dcol};border-color:${dcol};background:${dcol}18">${cap(ex.difficulty)}</span>` : ''}
        ${secondary.slice(0,3).map(s=>`<span class="mtag e">${cap(s)}</span>`).join('')}`;
 
     document.getElementById('mGrid').innerHTML =
       `<div class="mstat"><div class="mstat-lbl">Target</div><div class="mstat-val">${cap(muscle)}</div></div>
        <div class="mstat"><div class="mstat-lbl">Body Part</div><div class="mstat-val">${cap(ex.bodyPart||'—')}</div></div>
-       <div class="mstat"><div class="mstat-lbl">Equipment</div><div class="mstat-val">${cap(equip)}</div></div>`;
+       <div class="mstat"><div class="mstat-lbl">${ex.difficulty ? 'Difficulty' : 'Equipment'}</div><div class="mstat-val" style="${ex.difficulty ? `color:${dcol}` : ''}">${ex.difficulty ? cap(ex.difficulty) : cap(equip)}</div></div>`;
 
     document.getElementById('mInst').textContent = instructions;
     document.getElementById('overlay').classList.add('open');
