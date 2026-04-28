@@ -281,6 +281,43 @@
     .nav-item.active .nav-name{color:var(--orange)}
     .sb-rule{height:1px;background:var(--border);margin:14px 16px}
 
+    /* Difficulty — sidebar (desktop) */
+    .diff-wrap{padding:0 16px}
+    .diff-pill{
+      display:flex;align-items:center;gap:8px;width:100%;
+      background:var(--card2);border:1px solid var(--border);
+      border-radius:var(--r);padding:7px 11px;cursor:pointer;
+      font-size:12px;color:var(--dim);margin-bottom:5px;
+      transition:all .14s;text-align:left;
+    }
+    .diff-pill:hover{border-color:var(--border2);color:var(--text)}
+    .diff-pill.active{border-color:var(--cyan);color:var(--cyan);background:var(--og)}
+    .dd{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+    .dd.a{background:var(--border2)}.dd.b{background:#22c55e}.dd.i{background:var(--cyan2)}.dd.e{background:#ef4444}
+
+    /* Difficulty — inline bar (always visible) */
+    .diff-bar{
+      display:flex;
+      align-items:center;gap:7px;
+      padding:8px 16px;
+      border-bottom:1px solid var(--border);
+      background:var(--surf);
+      overflow-x:auto;scrollbar-width:none;
+      flex-shrink:0;
+    }
+    .diff-bar::-webkit-scrollbar{display:none}
+    .diff-bar-lbl{font-family:var(--mono);font-size:9.5px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);white-space:nowrap;flex-shrink:0}
+    .diff-bar-btn{
+      display:flex;align-items:center;gap:6px;
+      padding:4px 12px;border-radius:999px;
+      border:1px solid var(--border);background:none;
+      color:var(--dim);font-size:12px;font-family:var(--body);
+      cursor:pointer;transition:all .14s;white-space:nowrap;flex-shrink:0;
+    }
+    .diff-bar-btn:hover{border-color:var(--border2);color:var(--text)}
+    .diff-bar-btn.active{background:var(--cyan);border-color:var(--cyan);color:var(--bg);font-weight:600}
+    .diff-bar-btn .dd{flex-shrink:0}
+
     /* Main panel */
     .main-panel{overflow-y:auto;display:flex;flex-direction:column;background:var(--bg)}
 
@@ -746,6 +783,15 @@
         <div class="nav-info"><span class="nav-name">Cardio</span><span class="nav-sub">Endurance</span></div>
       </div>
 
+      <div class="sb-rule"></div>
+      <div class="sb-label">Difficulty</div>
+      <div class="diff-wrap">
+        <button class="diff-pill active" data-diff="" onclick="selectDiff(this,'sidebar')"><span class="dd a"></span>All Levels</button>
+        <button class="diff-pill" data-diff="beginner" onclick="selectDiff(this,'sidebar')"><span class="dd b"></span>Beginner</button>
+        <button class="diff-pill" data-diff="intermediate" onclick="selectDiff(this,'sidebar')"><span class="dd i"></span>Intermediate</button>
+        <button class="diff-pill" data-diff="expert" onclick="selectDiff(this,'sidebar')"><span class="dd e"></span>Expert</button>
+      </div>
+
     </nav>
 
     <!-- Main -->
@@ -759,6 +805,15 @@
           <h1 class="hero-title" id="heroTitle">Back <em>Exercises</em></h1>
           <p class="hero-meta" id="heroMeta">Loading exercises…</p>
         </div>
+      </div>
+
+      <!-- Difficulty bar — shown on mobile only -->
+      <div class="diff-bar" id="diffBar">
+        <span class="diff-bar-lbl">Difficulty —</span>
+        <button class="diff-bar-btn active" data-diff="" onclick="selectDiff(this,'bar')"><span class="dd a"></span>All</button>
+        <button class="diff-bar-btn" data-diff="beginner" onclick="selectDiff(this,'bar')"><span class="dd b"></span>Beginner</button>
+        <button class="diff-bar-btn" data-diff="intermediate" onclick="selectDiff(this,'bar')"><span class="dd i"></span>Intermediate</button>
+        <button class="diff-bar-btn" data-diff="expert" onclick="selectDiff(this,'bar')"><span class="dd e"></span>Expert</button>
       </div>
 
       <div class="chip-row">
@@ -857,7 +912,7 @@
 
   // ─── STATE ────────────────────────────────────────────────────
   let currentMuscle = 'back', currentType = '';
-  let activeType = '', searchQuery = '';
+  let activeDiff = '', activeType = '', searchQuery = '';
   let allFetched = [], appInitialized = false;
 
   // ─── NAV ──────────────────────────────────────────────────────
@@ -905,6 +960,21 @@
     loadExercises();
   }
 
+  // ─── DIFFICULTY ───────────────────────────────────────────────
+  // source = 'sidebar' | 'bar' — keeps both UIs in sync
+  function selectDiff(btn, source) {
+    activeDiff = btn.dataset.diff;
+    // Sync sidebar pills
+    document.querySelectorAll('.diff-pill').forEach(p => {
+      p.classList.toggle('active', p.dataset.diff === activeDiff);
+    });
+    // Sync mobile bar buttons
+    document.querySelectorAll('.diff-bar-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.diff === activeDiff);
+    });
+    applyAndRender();
+  }
+
   // ─── LOAD  ────────────────────────────────────────────────────
   // FIX: ignore 502/non-ok responses silently — API returns 502
   // when offset exceeds available results (not a real error).
@@ -941,7 +1011,7 @@
   // ─── FILTER + RENDER ──────────────────────────────────────────
   function applyAndRender() {
     const filtered = allFetched.filter(ex => {
-      // ExerciseDB uses category, not type
+      if (activeDiff && (ex.difficulty||'').toLowerCase() !== activeDiff) return false;
       if (activeType && (ex.category||ex.type||'').toLowerCase() !== activeType) return false;
       if (searchQuery) {
         const h = [ex.name, ex.target, ex.bodyPart, ex.category, ex.difficulty, ex.equipment]
