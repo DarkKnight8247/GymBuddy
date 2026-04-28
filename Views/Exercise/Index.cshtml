@@ -281,43 +281,33 @@
     .nav-item.active .nav-name{color:var(--orange)}
     .sb-rule{height:1px;background:var(--border);margin:14px 16px}
 
-    /* Difficulty */
-    .diff-wrap{padding:0 16px}
-    .diff-pill{
-      display:flex;align-items:center;gap:8px;width:100%;
-      background:var(--card2);border:1px solid var(--border);
-      border-radius:var(--r);padding:7px 11px;cursor:pointer;
-      font-size:12.5px;color:var(--dim);margin-bottom:5px;
-      transition:all .14s;text-align:left;
-    }
-    .diff-pill:hover{border-color:var(--border2);color:var(--text)}
-    .diff-pill.active{border-color:var(--orange);color:var(--orange);background:var(--og)}
-    .dd{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-    .dd.a{background:var(--border2)}.dd.b{background:#22c55e}.dd.i{background:var(--cyan2)}.dd.e{background:#ef4444}
-
     /* Main panel */
     .main-panel{overflow-y:auto;display:flex;flex-direction:column;background:var(--bg)}
 
     /* Hero header with photo */
-    .main-hero{position:relative;overflow:hidden;border-bottom:1px solid var(--border)}
-    .hero-img-strip{height:200px;position:relative;overflow:hidden}
-    .hero-img-strip img{width:100%;height:100%;object-fit:cover;filter:brightness(.55) saturate(.7)}
+    .main-hero{position:relative;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg)}
+    .hero-img-strip{height:160px;position:relative;overflow:hidden}
+    .hero-img-strip img{width:100%;height:100%;object-fit:cover;filter:brightness(.45) saturate(.6)}
     .hero-img-strip::after{
       content:'';position:absolute;inset:0;
-      background:linear-gradient(to bottom,rgba(13,15,20,.1) 0%,var(--bg) 100%);
+      background:linear-gradient(to bottom,transparent 30%,var(--bg) 100%);
     }
-    .hero-content{position:absolute;bottom:0;left:0;right:0;padding:0 32px 22px;z-index:2}
+    /* Text sits BELOW the image, not overlaid */
+    .hero-content{
+      padding:14px 32px 18px;
+      background:var(--bg);
+    }
     .hero-eyebrow{
       font-family:var(--mono);font-size:10px;letter-spacing:2.5px;text-transform:uppercase;
-      color:var(--orange);margin-bottom:6px;display:flex;align-items:center;gap:8px;
+      color:var(--cyan);margin-bottom:6px;display:flex;align-items:center;gap:8px;
     }
-    .hero-eyebrow::before{content:'';width:18px;height:1px;background:var(--orange)}
+    .hero-eyebrow::before{content:'';width:18px;height:1px;background:var(--cyan)}
     .hero-title{
-      font-family:var(--display);font-size:clamp(32px,4.5vw,52px);
-      letter-spacing:2px;color:var(--white);line-height:.95;margin-bottom:6px;
+      font-family:var(--display);font-size:clamp(28px,4vw,48px);
+      letter-spacing:2px;color:var(--white);line-height:1;margin-bottom:5px;
     }
-    .hero-title em{color:var(--orange3);font-style:normal}
-    .hero-meta{font-size:12.5px;color:rgba(255,255,255,.55)}
+    .hero-title em{color:var(--cyan);font-style:normal}
+    .hero-meta{font-size:12px;color:var(--dim)}
 
     /* Type chips */
     .chip-row{
@@ -423,7 +413,13 @@
     .retry-btn{margin-top:8px;background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.25);color:#dc2626;padding:5px 14px;border-radius:var(--r);font-size:12px;cursor:pointer;display:block}
 
     /* Modal */
-    .overlay{position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:500;display:flex;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(8px);opacity:0;pointer-events:none;transition:opacity .22s}
+    .overlay{
+      position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:500;
+      display:flex;align-items:center;justify-content:center;
+      padding:24px;backdrop-filter:blur(8px);
+      opacity:0;pointer-events:none;transition:opacity .22s;
+      overflow:hidden;
+    }
     .overlay.open{opacity:1;pointer-events:auto}
     .modal{
       background:var(--card);border:1px solid var(--border);
@@ -432,10 +428,12 @@
       transform:translateY(22px) scale(.97);
       transition:transform .28s cubic-bezier(.22,.68,0,1.2);
       box-shadow:0 24px 64px rgba(0,0,0,.5);
+      touch-action:pan-y;
+      overscroll-behavior:contain;
     }
     .overlay.open .modal{transform:translateY(0) scale(1)}
     .modal-accent{height:4px;background:linear-gradient(90deg,var(--cyan) 0%,var(--cyan3) 100%);flex-shrink:0}
-    .modal-img-wrap{height:240px;position:relative;overflow:hidden;flex-shrink:0;background:var(--card2)}
+    .modal-img-wrap{height:220px;position:relative;overflow:hidden;flex-shrink:0;background:var(--card2)}
     .modal-img-wrap img{width:100%;height:100%;object-fit:cover;filter:brightness(.7) saturate(.8)}
     .modal-img-wrap::after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,rgba(13,15,20,.1) 0%,var(--card) 100%)}
     .modal-close-btn{
@@ -444,21 +442,28 @@
       border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;
       cursor:pointer;color:var(--dim);transition:all .14s;
     }
-    .modal-close-btn:hover{border-color:var(--orange);color:var(--orange)}
+    .modal-close-btn:hover{border-color:var(--cyan);color:var(--cyan)}
     .modal-close-btn svg{width:15px;height:15px}
-    .modal-body{padding:0 26px 26px;overflow-y:auto;flex:1}
-    .modal-name{font-family:var(--display);font-size:36px;letter-spacing:1.5px;color:var(--light);line-height:1;text-transform:capitalize;margin-bottom:10px}
-    .modal-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px}
-    .mtag{padding:3px 11px;border-radius:999px;font-size:10.5px;font-family:var(--mono);letter-spacing:.5px;border:1px solid;text-transform:capitalize}
-    .mtag.m{color:var(--orange);border-color:var(--orange);background:var(--og)}
+    .modal-body{
+      padding:0 26px 26px;
+      overflow-y:auto;
+      overflow-x:hidden;
+      flex:1;
+      touch-action:pan-y;
+      overscroll-behavior:contain;
+    }
+    .modal-name{font-family:var(--display);font-size:32px;letter-spacing:1.5px;color:var(--light);line-height:1;text-transform:capitalize;margin-bottom:10px}
+    .modal-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px;overflow:hidden}
+    .mtag{padding:3px 11px;border-radius:999px;font-size:10.5px;font-family:var(--mono);letter-spacing:.5px;border:1px solid;text-transform:capitalize;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+    .mtag.m{color:var(--cyan);border-color:var(--cyan);background:var(--og)}
     .mtag.t{color:var(--dim);border-color:var(--border2)}
     .mtag.e{color:var(--dim);border-color:var(--border)}
-    .modal-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
-    .mstat{background:var(--card2);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px}
+    .modal-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
+    .mstat{background:var(--card2);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;min-width:0;overflow:hidden}
     .mstat-lbl{font-family:var(--mono);font-size:9.5px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
-    .mstat-val{font-size:13.5px;font-weight:500;color:var(--text);text-transform:capitalize}
+    .mstat-val{font-size:13px;font-weight:500;color:var(--text);text-transform:capitalize;word-break:break-word}
     .inst-lbl{font-family:var(--mono);font-size:9.5px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:9px}
-    .inst-text{font-size:14px;color:var(--dim);line-height:1.75}
+    .inst-text{font-size:14px;color:var(--dim);line-height:1.75;word-break:break-word;overflow-wrap:break-word}
 
     /* ── RESPONSIVE ─────────────────────────────────────────── */
     @@media(max-width:900px){
@@ -741,14 +746,6 @@
         <div class="nav-info"><span class="nav-name">Cardio</span><span class="nav-sub">Endurance</span></div>
       </div>
 
-      <div class="sb-rule"></div>
-      <div class="sb-label">Difficulty</div>
-      <div class="diff-wrap">
-        <button class="diff-pill active" data-diff="" onclick="selectDiff(this)"><span class="dd a"></span>All Levels</button>
-        <button class="diff-pill" data-diff="beginner" onclick="selectDiff(this)"><span class="dd b"></span>Beginner</button>
-        <button class="diff-pill" data-diff="intermediate" onclick="selectDiff(this)"><span class="dd i"></span>Intermediate</button>
-        <button class="diff-pill" data-diff="expert" onclick="selectDiff(this)"><span class="dd e"></span>Expert</button>
-      </div>
     </nav>
 
     <!-- Main -->
@@ -860,7 +857,7 @@
 
   // ─── STATE ────────────────────────────────────────────────────
   let currentMuscle = 'back', currentType = '';
-  let activeDiff = '', activeType = '', searchQuery = '';
+  let activeType = '', searchQuery = '';
   let allFetched = [], appInitialized = false;
 
   // ─── NAV ──────────────────────────────────────────────────────
@@ -906,11 +903,6 @@
     document.getElementById('heroTitle').innerHTML = nm + ' <em>Exercises</em>';
     document.getElementById('heroImg').src = getHeroPhoto(currentMuscle);
     loadExercises();
-  }
-
-  function selectDiff(btn) {
-    document.querySelectorAll('.diff-pill').forEach(p=>p.classList.remove('active'));
-    btn.classList.add('active'); activeDiff = btn.dataset.diff; loadExercises();
   }
 
   // ─── LOAD  ────────────────────────────────────────────────────
