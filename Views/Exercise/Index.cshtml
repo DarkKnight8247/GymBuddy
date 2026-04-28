@@ -281,19 +281,9 @@
     .nav-item.active .nav-name{color:var(--orange)}
     .sb-rule{height:1px;background:var(--border);margin:14px 16px}
 
-    /* Difficulty — sidebar (desktop) */
-    .diff-wrap{padding:0 16px}
-    .diff-pill{
-      display:flex;align-items:center;gap:8px;width:100%;
-      background:var(--card2);border:1px solid var(--border);
-      border-radius:var(--r);padding:7px 11px;cursor:pointer;
-      font-size:12px;color:var(--dim);margin-bottom:5px;
-      transition:all .14s;text-align:left;
-    }
-    .diff-pill:hover{border-color:var(--border2);color:var(--text)}
-    .diff-pill.active{border-color:var(--cyan);color:var(--cyan);background:var(--og)}
+    /* Difficulty dot colors — used by diff-bar */
     .dd{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-    .dd.a{background:var(--border2)}.dd.b{background:#22c55e}.dd.i{background:var(--cyan2)}.dd.e{background:#ef4444}
+    .dd.a{background:var(--border2)}.dd.b{background:#22c55e}.dd.i{background:var(--cyan2)}
 
     /* Difficulty — inline bar (always visible) */
     .diff-bar{
@@ -301,7 +291,7 @@
       align-items:center;gap:7px;
       padding:8px 16px;
       border-bottom:1px solid var(--border);
-      background:var(--surf);
+      background:var(--bg);
       overflow-x:auto;scrollbar-width:none;
       flex-shrink:0;
     }
@@ -783,15 +773,6 @@
         <div class="nav-info"><span class="nav-name">Cardio</span><span class="nav-sub">Endurance</span></div>
       </div>
 
-      <div class="sb-rule"></div>
-      <div class="sb-label">Difficulty</div>
-      <div class="diff-wrap">
-        <button class="diff-pill active" data-diff="" onclick="selectDiff(this,'sidebar')"><span class="dd a"></span>All Levels</button>
-        <button class="diff-pill" data-diff="beginner" onclick="selectDiff(this,'sidebar')"><span class="dd b"></span>Beginner</button>
-        <button class="diff-pill" data-diff="intermediate" onclick="selectDiff(this,'sidebar')"><span class="dd i"></span>Intermediate</button>
-        <button class="diff-pill" data-diff="expert" onclick="selectDiff(this,'sidebar')"><span class="dd e"></span>Expert</button>
-      </div>
-
     </nav>
 
     <!-- Main -->
@@ -813,7 +794,6 @@
         <button class="diff-bar-btn active" data-diff="" onclick="selectDiff(this,'bar')"><span class="dd a"></span>All</button>
         <button class="diff-bar-btn" data-diff="beginner" onclick="selectDiff(this,'bar')"><span class="dd b"></span>Beginner</button>
         <button class="diff-bar-btn" data-diff="intermediate" onclick="selectDiff(this,'bar')"><span class="dd i"></span>Intermediate</button>
-        <button class="diff-bar-btn" data-diff="expert" onclick="selectDiff(this,'bar')"><span class="dd e"></span>Expert</button>
       </div>
 
       <div class="chip-row">
@@ -964,11 +944,6 @@
   // source = 'sidebar' | 'bar' — keeps both UIs in sync
   function selectDiff(btn, source) {
     activeDiff = btn.dataset.diff;
-    // Sync sidebar pills
-    document.querySelectorAll('.diff-pill').forEach(p => {
-      p.classList.toggle('active', p.dataset.diff === activeDiff);
-    });
-    // Sync mobile bar buttons
     document.querySelectorAll('.diff-bar-btn').forEach(b => {
       b.classList.toggle('active', b.dataset.diff === activeDiff);
     });
